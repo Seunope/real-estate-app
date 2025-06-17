@@ -25,39 +25,44 @@ import MultiLeadModel from "components/commonTableModel/MultiLeadModel";
 import Spinner from "components/spinner/Spinner";
 import dayjs from "dayjs";
 import { useFormik } from "formik";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { LiaMousePointerSolid } from "react-icons/lia";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { MeetingSchema } from "schema";
 import { getApi, postApi } from "services/api";
+import { useDispatch } from "react-redux";
+import { fetchLeadData } from "../../../../redux/slices/leadSlice";
+import { fetchContactData } from "../../../../redux/slices/contactSlice";
 
 const AddMeeting = (props) => {
+  const dispatch = useDispatch();
+
   const { onClose, isOpen, setAction, from, fetchData, view } = props;
   const [leaddata, setLeadData] = useState([]);
   const [contactdata, setContactData] = useState([]);
-  const [isLoding, setIsLoding] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [contactModelOpen, setContactModel] = useState(false);
   const [leadModelOpen, setLeadModel] = useState(false);
   const todayTime = new Date().toISOString().split(".")[0];
   const leadData = useSelector((state) => state?.leadData?.data);
 
   const user = JSON.parse(localStorage.getItem("user"));
-
   const contactList = useSelector((state) => state?.contactData?.data);
 
   const initialValues = {
     agenda: "",
-    attendes: props.leadContect === "contactView" && props.id ? [props.id] : [],
-    attendesLead:
-      props.leadContect === "leadView" && props.id ? [props.id] : [],
+    attendees:
+      props.leadContact === "contactView" && props.id ? [props.id] : [],
+    attendeesLead:
+      props.leadContact === "leadView" && props.id ? [props.id] : [],
     location: "",
     related:
-      props.leadContect === "contactView"
+      props.leadContact === "contactView"
         ? "Contact"
-        : props.leadContect === "leadView"
+        : props.leadContact === "leadView"
         ? "Lead"
-        : "None",
+        : null,
     dateTime: "",
     notes: "",
     createBy: user?._id,
@@ -66,7 +71,10 @@ const AddMeeting = (props) => {
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: MeetingSchema,
-    onSubmit: (values, { resetForm }) => {},
+    onSubmit: (values, { resetForm }) => {
+      AddData();
+      resetForm();
+    },
   });
   const {
     errors,
@@ -78,11 +86,61 @@ const AddMeeting = (props) => {
     setFieldValue,
   } = formik;
 
-  const AddData = async () => {};
+  const AddData = async () => {
+    try {
+      console.log("values", values);
+      setIsLoading(true);
+      let response = await postApi("api/meeting/add", values);
+      if (response.status === 200) {
+        toast.success("Meeting added successfully!");
+        props.onClose();
+        props.setAction((pre) => !pre);
+        if (props.fetchData) {
+          props.fetchData(); // Refresh parent component data
+        }
+      }
+    } catch (e) {
+      console.error("Error adding meeting:", e);
+      toast.error("Failed to add meeting");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const fetchAllData = async () => {};
+  const fetchAllData = useCallback(async () => {
+    try {
+      // Fetch contact data
+      const contactResult = await dispatch(fetchContactData());
+      if (contactResult.payload?.status === 200) {
+        setContactData(contactResult.payload.data);
+      }
 
-  useEffect(() => {}, [props.id, values.related]);
+      // Fetch lead data
+      const leadResult = await dispatch(fetchLeadData());
+      if (leadResult.payload?.status === 200) {
+        setLeadData(leadResult.payload.data);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Failed to fetch data");
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (contactList) {
+      setContactData(contactList);
+    }
+  }, [contactList]);
+
+  useEffect(() => {
+    if (leadData) {
+      setLeadData(leadData);
+    }
+  }, [leadData]);
+
+  useEffect(() => {
+    fetchAllData();
+  }, [props.id, values.related, fetchAllData]);
 
   const extractLabels = (selectedItems) => {
     return selectedItems.map((item) => item._id);
@@ -93,10 +151,7 @@ const AddMeeting = (props) => {
   )?.map((item) => ({
     ...item,
     value: item._id,
-    label:
-      values.related === "Contact"
-        ? `${item.firstName} ${item.lastName}`
-        : item.leadName,
+    label: values.related === "Contact" ? `${item.fullName}` : item.leadName,
   }));
 
   return (
@@ -111,7 +166,7 @@ const AddMeeting = (props) => {
             data={contactdata}
             isOpen={contactModelOpen}
             onClose={setContactModel}
-            fieldName="attendes"
+            fieldName="attendees"
             setFieldValue={setFieldValue}
           />
           {/* Lead Model  */}
@@ -119,7 +174,7 @@ const AddMeeting = (props) => {
             data={leaddata}
             isOpen={leadModelOpen}
             onClose={setLeadModel}
-            fieldName="attendesLead"
+            fieldName="attendeesLead"
             setFieldValue={setFieldValue}
           />
 
@@ -164,13 +219,13 @@ const AddMeeting = (props) => {
                 value={values.related}
               >
                 <Stack direction="row">
-                  {props.leadContect === "contactView" && (
+                  {props.leadContact === "contactView" && (
                     <Radio value="Contact">Contact</Radio>
                   )}
-                  {props.leadContect === "leadView" && (
+                  {props.leadContact === "leadView" && (
                     <Radio value="Lead">Lead</Radio>
                   )}
-                  {!props.leadContect && (
+                  {!props.leadContact && (
                     <>
                       {" "}
                       <Radio value="Contact">Contact</Radio>
@@ -198,24 +253,24 @@ const AddMeeting = (props) => {
                             : values.related === "Lead" && "Lead"
                         }`}
                         placeholder="Type a Name"
-                        name="attendes"
+                        name="attendees"
                         items={countriesWithEmailAsLabel}
                         className="custom-autoComplete"
                         selectedItems={countriesWithEmailAsLabel?.filter(
                           (item) =>
                             values.related === "Contact"
-                              ? values?.attendes.includes(item._id)
+                              ? values?.attendees.includes(item._id)
                               : values.related === "Lead" &&
-                                values?.attendesLead.includes(item._id)
+                                values?.attendeesLead.includes(item._id)
                         )}
                         onSelectedItemsChange={(changes) => {
                           const selectedLabels = extractLabels(
                             changes.selectedItems
                           );
                           values.related === "Contact"
-                            ? setFieldValue("attendes", selectedLabels)
+                            ? setFieldValue("attendees", selectedLabels)
                             : values.related === "Lead" &&
-                              setFieldValue("attendesLead", selectedLabels);
+                              setFieldValue("attendeesLead", selectedLabels);
                         }}
                       />
                     </Text>
@@ -232,7 +287,7 @@ const AddMeeting = (props) => {
                   </Flex>
                   <Text color={"red"}>
                     {" "}
-                    {errors.attendes && touched.attendes && errors.attendes}
+                    {errors.attendees && touched.attendees && errors.attendees}
                   </Text>
                 </GridItem>
               )}
@@ -325,10 +380,10 @@ const AddMeeting = (props) => {
             size="sm"
             variant="brand"
             me={2}
-            disabled={isLoding ? true : false}
+            disabled={isLoading ? true : false}
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoading ? <Spinner /> : "Save"}
           </Button>
           <Button
             sx={{

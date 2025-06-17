@@ -31,16 +31,23 @@ const add = async (req, res) => {
     ) {
       return res.status(400).json({ error: "Invalid attendeesLead value" });
     }
+    let attendesLead = [...attendeesLead];
+    let attendes = [...attendees];
 
+    if (related == "Contact") {
+      attendesLead = [];
+    } else {
+      attendes = [];
+    }
     const meeting = {
-      agenda,
-      attendees,
-      attendeesLead,
-      location,
-      related,
-      dateTime,
       notes,
+      related,
+      agenda,
+      location,
+      dateTime,
       createBy,
+      attendes,
+      attendesLead,
     };
 
     const result = new MeetingHistory(meeting);
