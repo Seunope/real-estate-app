@@ -149,7 +149,7 @@ const view = async (req, res) => {
       {
         $lookup: {
           from: "Contacts",
-          localField: "attendees",
+          localField: "attendes",
           foreignField: "_id",
           as: "attendeesContact",
         },
@@ -157,45 +157,40 @@ const view = async (req, res) => {
       {
         $lookup: {
           from: "Leads",
-          localField: "attendeesLead",
+          localField: "attendesLead",
           foreignField: "_id",
-          as: "attendeesLeadRef",
+          as: "attendeesLead",
         },
       },
       {
         $lookup: {
-          from: "Users",
+          from: "User",
           localField: "createBy",
           foreignField: "_id",
-          as: "creator",
+          as: "users",
         },
       },
-      { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
       {
         $addFields: {
-          creatorName: {
-            $concat: ["$creator.firstName", " ", "$creator.lastName"],
+          createdByName: {
+            $concat: ["$users.firstName", " ", "$users.lastName"],
           },
-          attendeesNames: {
+          attendes: {
             $map: {
               input: "$attendeesContact",
               as: "contact",
               in: {
-                $concat: [
-                  "$$contact.title",
-                  " ",
-                  "$$contact.firstName",
-                  " ",
-                  "$$contact.lastName",
-                ],
+                fullName: "$$contact.fullName",
+                _id: "$$contact._id",
               },
             },
           },
-          attendeesLeadNames: {
+          attendesLead: {
             $map: {
-              input: "$attendeesLeadRef",
+              input: "$attendeesLead",
               as: "lead",
-              in: "$$lead.leadName",
+              in: { leadName: "$$lead.leadName", _id: "$$lead._id" },
             },
           },
         },

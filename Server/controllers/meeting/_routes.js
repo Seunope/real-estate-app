@@ -13,8 +13,7 @@ const validator = require("../../middelwares/validator");
 const router = express.Router();
 
 router.get("/", auth, validateIndex, validator, meeting.index);
-// router.get("/view/:id", auth, validateView, validator, meeting.view);
-// console.log("Meeting routes initialized&&&&&&&&&&&&&");
+router.get("/view/:id", auth, validateView, validator, meeting.view);
 router.post("/add", auth, validateAdd, validator, meeting.add);
 router.delete(
   "/delete/:id",
