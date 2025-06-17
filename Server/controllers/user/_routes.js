@@ -1,19 +1,19 @@
-const express = require('express');
-const user = require('./user');
-const auth = require('../../middelwares/auth');
+const express = require("express");
+const user = require("./user");
+const auth = require("../../middelwares/auth");
+const { validateLogin } = require("./_validator");
+const validator = require("../../middelwares/validator");
 
 const router = express.Router();
 
-router.post('/admin-register', user.adminRegister)
-router.get('/', auth, user.index)
-router.post('/register', user.register)
-router.post('/login', user.login)
-router.post('/deleteMany', auth, user.deleteMany)
-router.get('/view/:id', auth, user.view)
-router.delete('/delete/:id', auth, user.deleteData)
-router.put('/edit/:id', auth, user.edit)
-router.put('/change-roles/:id', auth, user.changeRoles)
+router.post("/admin-register", user.adminRegister);
+router.get("/", auth, user.index);
+router.post("/register", user.register);
+router.post("/login", validateLogin, validator, user.login);
+router.post("/deleteMany", auth, user.deleteMany);
+router.get("/view/:id", auth, user.view);
+router.delete("/delete/:id", auth, user.deleteData);
+router.put("/edit/:id", auth, user.edit);
+router.put("/change-roles/:id", auth, user.changeRoles);
 
-
-
-module.exports = router
+module.exports = router;
