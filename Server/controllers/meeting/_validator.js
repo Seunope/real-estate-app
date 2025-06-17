@@ -22,9 +22,9 @@ export const validateAdd = [
     .optional()
     .isString()
     .withMessage("Location must be a string"),
-  body("related").optional().isString().withMessage("Related must be a string"),
+  body("related").isString().withMessage("Related must be a string"),
   body("dateTime")
-    .optional()
+    // .optional()
     .isString()
     .withMessage("DateTime must be a string"),
   body("notes").optional().isString().withMessage("Notes must be a string"),

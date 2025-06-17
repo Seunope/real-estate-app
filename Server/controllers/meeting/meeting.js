@@ -80,17 +80,17 @@ const index = async (req, res) => {
       },
       {
         $lookup: {
-          from: "Users",
+          from: "User",
           localField: "createBy",
           foreignField: "_id",
-          as: "creator",
+          as: "users",
         },
       },
-      { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
       {
         $addFields: {
-          creatorName: {
-            $concat: ["$creator.firstName", " ", "$creator.lastName"],
+          createdByName: {
+            $concat: ["$users.firstName", " ", "$users.lastName"],
           },
           attendeesNames: {
             $map: {
