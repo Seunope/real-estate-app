@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": false,
+        "amount": 30
+    },
+    "auditLog": "/Users/mac/Documents/Test/React-Node-Test/logs/error/.d3d9e538d93b5e31022659447cdfa07c3e78aeb6-audit.json",
+    "files": [
+        {
+            "date": 1750165939557,
+            "name": "/Users/mac/Documents/Test/React-Node-Test/logs/error/2025-06-17.log",
+            "hash": "d04136639940130ce1564736e8bcfa8d0d9dba33ff76ed9460644831ba5e50ea"
+        }
+    ],
+    "hashType": "sha256"
+}

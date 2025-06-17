@@ -3,6 +3,8 @@ const db = require("./db/config");
 const route = require("./controllers/route");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const logger = require("./logger");
+const createError = require("http-errors");
 
 const port = 5001;
 require("dotenv").config();
@@ -16,11 +18,25 @@ const app = express();
 app.use(bodyParser.json());
 // Set up CORS
 app.use(cors());
+
 //API Routes
 app.use("/api", route);
 
 app.get("/", async (req, res) => {
   res.send("Welcome to my world...");
+});
+// Error handling middleware (should be after all routes)
+app.use((req, res, next) => {
+  next(createError(404)); // Not Found
+});
+
+// Custom Error-Handling Middleware
+app.use((err, req, res, next) => {
+  logger.error(`Error: ${err.message}`, { stack: err.stack });
+  res.status(err.status || 500).json({
+    message: err.message || "Internal Server Error",
+    error: process.env.NODE_ENV === "production" ? {} : err.stack,
+  });
 });
 
 // Get port from environment and store in Express.
@@ -40,5 +56,6 @@ const DATABASE_URL = process.env.DB_URL || "mongodb://127.0.0.1:27017";
 const DATABASE = process.env.DB || "Prolink";
 
 console.log(`Connecting to database at ${DATABASE_URL}/${DATABASE}...`);
+logger.info(`Connecting to database at ${DATABASE_URL}/${DATABASE}...`);
 
 db(DATABASE_URL, DATABASE);

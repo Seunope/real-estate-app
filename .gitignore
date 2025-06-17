@@ -8,7 +8,9 @@ Client/node_modules
 server/node_modules
 server/uploads
 server/.env
+server/*.log
 Client/.env
+
 
 /.pnp
 .pnp.js
