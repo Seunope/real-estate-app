@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { DeleteIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Button,
   Menu,
@@ -9,38 +7,38 @@ import {
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
-import { getApi } from "services/api";
-import { HasAccess } from "../../../redux/accessUtils";
-import CommonCheckTable from "../../../components/reactTable/checktable";
-import { SearchIcon } from "@chakra-ui/icons";
-import { CiMenuKebab } from "react-icons/ci";
-import { Link, useNavigate } from "react-router-dom";
-import MeetingAdvanceSearch from "./components/MeetingAdvanceSearch";
-import AddMeeting from "./components/Addmeeting";
-import CommonDeleteModel from "components/commonDeleteModel";
-import { deleteManyApi, deleteApi } from "services/api";
 import { toast } from "react-toastify";
-
-import { fetchMeetingData } from "../../../redux/slices/meetingSlice";
 import { useDispatch } from "react-redux";
+import { CiMenuKebab } from "react-icons/ci";
+import { useEffect, useState } from "react";
+import { SearchIcon } from "@chakra-ui/icons";
+import AddMeeting from "./components/Addmeeting";
+import { Link, useNavigate } from "react-router-dom";
+import { DeleteIcon, ViewIcon } from "@chakra-ui/icons";
+import { HasAccess } from "../../../redux/accessUtils";
+import { deleteManyApi, deleteApi } from "services/api";
+import CommonDeleteModel from "components/commonDeleteModel";
+import MeetingAdvanceSearch from "./components/MeetingAdvanceSearch";
+import { fetchMeetingData } from "../../../redux/slices/meetingSlice";
+import CommonCheckTable from "../../../components/reactTable/checktable";
 
 const Index = () => {
   const title = "Meeting";
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [data, setData] = useState([]);
   const [action, setAction] = useState(false);
+  const [permission] = HasAccess(["Meetings"]);
+  const [isLoading, setIsLoading] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [deleteMany, setDeleteMany] = useState(false);
+  const [searchedData, setSearchedData] = useState([]);
+  // const user = JSON.parse(localStorage.getItem("user"));
   const [selectedValues, setSelectedValues] = useState([]);
   const [advanceSearch, setAdvanceSearch] = useState(false);
-  const [getTagValuesOutSide, setGetTagValuesOutside] = useState([]);
   const [searchboxOutside, setSearchboxOutside] = useState("");
-  const user = JSON.parse(localStorage.getItem("user"));
-  const [deleteMany, setDeleteMany] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState([]);
+  const [getTagValuesOutSide, setGetTagValuesOutside] = useState([]);
   const [displaySearchData, setDisplaySearchData] = useState(false);
-  const [searchedData, setSearchedData] = useState([]);
-  const [permission] = HasAccess(["Meetings"]);
-  const dispatch = useDispatch();
 
   const actionHeader = {
     Header: "Action",
@@ -64,6 +62,16 @@ const Index = () => {
                 icon={<ViewIcon fontSize={15} />}
               >
                 View
+              </MenuItem>
+            )}
+            {permission?.edit && (
+              <MenuItem
+                py={2.5}
+                color={"green"}
+                onClick={() => navigate(`/metting/${row?.values._id}`)}
+                icon={<ViewIcon fontSize={15} />}
+              >
+                Edit
               </MenuItem>
             )}
             {permission?.delete && (
@@ -130,38 +138,14 @@ const Index = () => {
     setIsLoading(false);
   };
 
-  // const handleDeleteMeeting = async (ids) => {
-  //   console.log("handleDeleteMeeting", ids);
-  //   // return;
-  //   try {
-  //     setIsLoading(true);
-  //     // let response = await deleteManyApi("api/meeting/deleteMany", ids);
-  //     let response = await deleteApi("api/meeting/delete/", ids[0]);
-
-  //     if (response.status === 200) {
-  //       setSelectedValues([]);
-  //       setDeleteMany(false);
-  //       setAction((pre) => !pre);
-  //       toast.success("Meeting deleted successfully");
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //     toast.error("Failed to delete meeting", "error");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
   const handleDeleteMeeting = async (ids) => {
     try {
       setIsLoading(true);
 
       let response;
-
-      // If multiple IDs, use deleteManyApi, otherwise use single delete
       if (ids.length > 1) {
         response = await deleteManyApi("api/meeting/deleteMany", { ids });
       } else {
-        // For single deletion, use the existing deleteApi
         response = await deleteApi("api/meeting/delete/", ids[0]);
       }
 

@@ -20,24 +20,23 @@ import { IoIosArrowBack } from "react-icons/io";
 import Spinner from "components/spinner/Spinner";
 import { HasAccess } from "../../../redux/accessUtils";
 import { HSeparator } from "components/separator/Separator";
-import { Link, useNavigate, useParams } from "react-router-dom";
 import CommonDeleteModel from "components/commonDeleteModel";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 const View = () => {
   const param = useParams();
-
+  const params = useParams();
+  const navigate = useNavigate();
   const [data, setData] = useState();
+  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [deleteMany, setDeleteMany] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
-  const [isLoading, setIsLoading] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const params = useParams();
 
   const fetchData = async () => {
     setIsLoading(true);
     let response = await getApi("api/meeting/view/", param.id);
-    console.log("response", response.data);
+    // console.log("response", response.data);
     setData(response?.data);
     setIsLoading(false);
   };

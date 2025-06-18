@@ -1,26 +1,25 @@
-import { CloseIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
-  DrawerFooter,
   Flex,
   Grid,
-  GridItem,
-  IconButton,
   Modal,
+  Text,
+  GridItem,
   ModalBody,
+  IconButton,
   ModalContent,
   ModalHeader,
   ModalOverlay,
-  Text,
+  DrawerFooter,
 } from "@chakra-ui/react";
-import Spinner from "components/spinner/Spinner";
 import moment from "moment";
-import { useEffect, useState } from "react";
-import { BiLink } from "react-icons/bi";
-import { Link } from "react-router-dom";
 import { getApi } from "services/api";
-// import DeleteTask from './components/deleteTask'
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import Spinner from "components/spinner/Spinner";
 import { useNavigate } from "react-router-dom";
+// import DeleteTask from './components/deleteTask'
 import { HasAccess } from "../../../redux/accessUtils";
+import { CloseIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 
 const MeetingView = (props) => {
   const { onClose, isOpen, info, fetchData, setAction, action, access } = props;
@@ -39,7 +38,7 @@ const MeetingView = (props) => {
         info?.event ? info?.event?.id : info
       );
       setData(result?.data);
-      console.log("result", result.data);
+      // console.log("result", result.data);
       setIsLoading(false);
     }
   };
