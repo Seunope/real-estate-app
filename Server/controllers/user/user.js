@@ -1,6 +1,7 @@
 const User = require("../../model/schema/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const logger = require("../../logger");
 
 // Admin register
 const adminRegister = async (req, res) => {
@@ -201,10 +202,10 @@ const login = async (req, res) => {
     if (!passwordMatch) {
       res
         .status(401)
-        .json({ error: "Authentication failed,password does not match" });
+        .json({ error: "Authentication failed, password does not match" });
       return;
     }
-    // Create a JWT token
+
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRATION,
     });
@@ -214,6 +215,7 @@ const login = async (req, res) => {
       .setHeader("Authorization", `Bearer${token}`)
       .json({ token: token, user });
   } catch (error) {
+    logger.error("Login Error:", error);
     res.status(500).json({ error: "An error occurred" });
   }
 };

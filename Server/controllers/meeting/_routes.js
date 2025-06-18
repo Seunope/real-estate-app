@@ -22,8 +22,8 @@ router.delete(
   validator,
   meeting.deleteData
 );
-router.delete(
-  "/delete-many",
+router.post(
+  "/deleteMany",
   auth,
   validateDeleteMany,
   validator,

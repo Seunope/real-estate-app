@@ -1,3 +1,4 @@
+import moment from "moment";
 import {
   Box,
   Button,
@@ -7,37 +8,38 @@ import {
   Heading,
   Text,
 } from "@chakra-ui/react";
-import Card from "components/card/Card";
-import { HSeparator } from "components/separator/Separator";
-import Spinner from "components/spinner/Spinner";
-import moment from "moment";
-import { useEffect, useState } from "react";
-import { IoIosArrowBack } from "react-icons/io";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { HasAccess } from "../../../redux/accessUtils";
-import { getApi } from "services/api";
-import { DeleteIcon } from "@chakra-ui/icons";
-import { deleteApi } from "services/api";
-import CommonDeleteModel from "components/commonDeleteModel";
-import { FaFilePdf } from "react-icons/fa";
 import html2pdf from "html2pdf.js";
+import { toast } from "react-toastify";
+import { getApi } from "services/api";
+import Card from "components/card/Card";
+import { deleteApi } from "services/api";
+import { useEffect, useState } from "react";
+import { FaFilePdf } from "react-icons/fa";
+import { DeleteIcon } from "@chakra-ui/icons";
+import { IoIosArrowBack } from "react-icons/io";
+import Spinner from "components/spinner/Spinner";
+import { HasAccess } from "../../../redux/accessUtils";
+import { HSeparator } from "components/separator/Separator";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import CommonDeleteModel from "components/commonDeleteModel";
+
 const View = () => {
   const param = useParams();
 
   const [data, setData] = useState();
   const [deleteMany, setDeleteMany] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
-  const [isLoding, setIsLoding] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const params = useParams();
 
   const fetchData = async () => {
-    setIsLoding(true);
+    setIsLoading(true);
     let response = await getApi("api/meeting/view/", param.id);
     console.log("response", response.data);
     setData(response?.data);
-    setIsLoding(false);
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -71,18 +73,20 @@ const View = () => {
     }
   };
 
-  const handleDeleteMeeting = async (ids) => {
+  const handleDeleteMeeting = async () => {
     try {
-      setIsLoding(true);
+      setIsLoading(true);
       let response = await deleteApi("api/meeting/delete/", params.id);
       if (response.status === 200) {
         setDeleteMany(false);
+        toast.success("Meeting deleted successfully");
         navigate(-1);
       }
     } catch (error) {
       console.log(error);
+      toast.error("Failed to delete meeting");
     } finally {
-      setIsLoding(false);
+      setIsLoading(false);
     }
   };
 
@@ -94,7 +98,7 @@ const View = () => {
 
   return (
     <>
-      {isLoding ? (
+      {isLoading ? (
         <Flex justifyContent={"center"} alignItems={"center"} width="100%">
           <Spinner />
         </Flex>
@@ -328,7 +332,7 @@ const View = () => {
       <CommonDeleteModel
         isOpen={deleteMany}
         onClose={() => setDeleteMany(false)}
-        type="Meetings"
+        type="Meeting"
         handleDeleteData={handleDeleteMeeting}
         ids={params.id}
       />

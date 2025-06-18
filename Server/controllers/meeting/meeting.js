@@ -1,3 +1,4 @@
+const logger = require("../../logger");
 const MeetingHistory = require("../../model/schema/meeting");
 const User = require("../../model/schema/user");
 const mongoose = require("mongoose");
@@ -128,7 +129,7 @@ const index = async (req, res) => {
 
     res.status(200).json(result);
   } catch (err) {
-    console.error("Failed to fetch meetings:", err);
+    // console.error("Failed to fetch meetings:", err);
     res.status(400).json({ err, error: "Failed to fetch meetings" });
   }
 };
@@ -219,8 +220,8 @@ const deleteData = async (req, res) => {
 
     res.status(200).json({ message: "Meeting marked as deleted", result });
   } catch (err) {
-    console.error("Failed to delete meeting:", err);
-    res.status(400).json({ err, error: "Failed to delete meeting" });
+    logger.error("Failed to delete meeting:", err);
+    return res.status(400).json({ err, error: "Failed to delete meeting" });
   }
 };
 

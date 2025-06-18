@@ -18,7 +18,7 @@ import { Link, useNavigate } from "react-router-dom";
 import MeetingAdvanceSearch from "./components/MeetingAdvanceSearch";
 import AddMeeting from "./components/Addmeeting";
 import CommonDeleteModel from "components/commonDeleteModel";
-import { deleteManyApi } from "services/api";
+import { deleteManyApi, deleteApi } from "services/api";
 import { toast } from "react-toastify";
 
 import { fetchMeetingData } from "../../../redux/slices/meetingSlice";
@@ -130,17 +130,60 @@ const Index = () => {
     setIsLoading(false);
   };
 
+  // const handleDeleteMeeting = async (ids) => {
+  //   console.log("handleDeleteMeeting", ids);
+  //   // return;
+  //   try {
+  //     setIsLoading(true);
+  //     // let response = await deleteManyApi("api/meeting/deleteMany", ids);
+  //     let response = await deleteApi("api/meeting/delete/", ids[0]);
+
+  //     if (response.status === 200) {
+  //       setSelectedValues([]);
+  //       setDeleteMany(false);
+  //       setAction((pre) => !pre);
+  //       toast.success("Meeting deleted successfully");
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //     toast.error("Failed to delete meeting", "error");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const handleDeleteMeeting = async (ids) => {
     try {
       setIsLoading(true);
-      let response = await deleteManyApi("api/meeting/deleteMany", ids);
+
+      let response;
+
+      // If multiple IDs, use deleteManyApi, otherwise use single delete
+      if (ids.length > 1) {
+        response = await deleteManyApi("api/meeting/deleteMany", { ids });
+      } else {
+        // For single deletion, use the existing deleteApi
+        response = await deleteApi("api/meeting/delete/", ids[0]);
+      }
+
       if (response.status === 200) {
         setSelectedValues([]);
         setDeleteMany(false);
         setAction((pre) => !pre);
+
+        const message =
+          ids.length > 1
+            ? `${ids.length} meetings deleted successfully`
+            : "Meeting deleted successfully";
+        toast.success(message);
       }
     } catch (error) {
       console.log(error);
+
+      const message =
+        ids.length > 1
+          ? "Failed to delete meetings"
+          : "Failed to delete meeting";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -213,7 +256,7 @@ const Index = () => {
       <CommonDeleteModel
         isOpen={deleteMany}
         onClose={() => setDeleteMany(false)}
-        type="Meetings"
+        type={selectedValues.length === 1 ? "Meeting" : "Meetings"}
         handleDeleteData={handleDeleteMeeting}
         ids={selectedValues}
       />
