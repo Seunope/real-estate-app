@@ -1,3 +1,4 @@
+const logger = require("../../logger");
 const MeetingHistory = require("../../model/schema/meeting");
 const User = require("../../model/schema/user");
 const mongoose = require("mongoose");
@@ -31,16 +32,23 @@ const add = async (req, res) => {
     ) {
       return res.status(400).json({ error: "Invalid attendeesLead value" });
     }
+    let attendesLead = [...attendeesLead];
+    let attendes = [...attendees];
 
+    if (related == "Contact") {
+      attendesLead = [];
+    } else {
+      attendes = [];
+    }
     const meeting = {
-      agenda,
-      attendees,
-      attendeesLead,
-      location,
-      related,
-      dateTime,
       notes,
+      related,
+      agenda,
+      location,
+      dateTime,
       createBy,
+      attendes,
+      attendesLead,
     };
 
     const result = new MeetingHistory(meeting);
@@ -80,17 +88,17 @@ const index = async (req, res) => {
       },
       {
         $lookup: {
-          from: "Users",
+          from: "User",
           localField: "createBy",
           foreignField: "_id",
-          as: "creator",
+          as: "users",
         },
       },
-      { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
       {
         $addFields: {
-          creatorName: {
-            $concat: ["$creator.firstName", " ", "$creator.lastName"],
+          createdByName: {
+            $concat: ["$users.firstName", " ", "$users.lastName"],
           },
           attendeesNames: {
             $map: {
@@ -121,7 +129,7 @@ const index = async (req, res) => {
 
     res.status(200).json(result);
   } catch (err) {
-    console.error("Failed to fetch meetings:", err);
+    // console.error("Failed to fetch meetings:", err);
     res.status(400).json({ err, error: "Failed to fetch meetings" });
   }
 };
@@ -142,7 +150,7 @@ const view = async (req, res) => {
       {
         $lookup: {
           from: "Contacts",
-          localField: "attendees",
+          localField: "attendes",
           foreignField: "_id",
           as: "attendeesContact",
         },
@@ -150,45 +158,40 @@ const view = async (req, res) => {
       {
         $lookup: {
           from: "Leads",
-          localField: "attendeesLead",
+          localField: "attendesLead",
           foreignField: "_id",
-          as: "attendeesLeadRef",
+          as: "attendeesLead",
         },
       },
       {
         $lookup: {
-          from: "Users",
+          from: "User",
           localField: "createBy",
           foreignField: "_id",
-          as: "creator",
+          as: "users",
         },
       },
-      { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
       {
         $addFields: {
-          creatorName: {
-            $concat: ["$creator.firstName", " ", "$creator.lastName"],
+          createdByName: {
+            $concat: ["$users.firstName", " ", "$users.lastName"],
           },
-          attendeesNames: {
+          attendes: {
             $map: {
               input: "$attendeesContact",
               as: "contact",
               in: {
-                $concat: [
-                  "$$contact.title",
-                  " ",
-                  "$$contact.firstName",
-                  " ",
-                  "$$contact.lastName",
-                ],
+                fullName: "$$contact.fullName",
+                _id: "$$contact._id",
               },
             },
           },
-          attendeesLeadNames: {
+          attendesLead: {
             $map: {
-              input: "$attendeesLeadRef",
+              input: "$attendeesLead",
               as: "lead",
-              in: "$$lead.leadName",
+              in: { leadName: "$$lead.leadName", _id: "$$lead._id" },
             },
           },
         },
@@ -217,8 +220,8 @@ const deleteData = async (req, res) => {
 
     res.status(200).json({ message: "Meeting marked as deleted", result });
   } catch (err) {
-    console.error("Failed to delete meeting:", err);
-    res.status(400).json({ err, error: "Failed to delete meeting" });
+    logger.error("Failed to delete meeting:", err);
+    return res.status(400).json({ err, error: "Failed to delete meeting" });
   }
 };
 

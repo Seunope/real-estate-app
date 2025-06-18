@@ -57,6 +57,7 @@ export const deleteApi = async (path, param) => {
 };
 
 export const deleteManyApi = async (path, data) => {
+  console.log("deleteManyApi", path, data);
   try {
     let result = await axios.post(constant.baseUrl + path, data, {
       headers: {

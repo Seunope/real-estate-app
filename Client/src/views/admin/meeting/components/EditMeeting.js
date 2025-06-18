@@ -22,56 +22,51 @@ import {
 import dayjs from "dayjs";
 import { useFormik } from "formik";
 import { toast } from "react-toastify";
+import { putApi } from "services/api";
 import { MeetingSchema } from "schema";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
-import { getApi, postApi } from "services/api";
 import Spinner from "components/spinner/Spinner";
 import { LiaMousePointerSolid } from "react-icons/lia";
-import { useEffect, useState, useCallback } from "react";
 import { CUIAutoComplete } from "chakra-ui-autocomplete";
+import { useEffect, useState, useCallback } from "react";
 import { fetchLeadData } from "../../../../redux/slices/leadSlice";
 import MultiLeadModel from "components/commonTableModel/MultiLeadModel";
 import { fetchContactData } from "../../../../redux/slices/contactSlice";
 import MultiContactModel from "components/commonTableModel/MultiContactModel";
 
-const AddMeeting = (props) => {
+const EditMeeting = (props) => {
   const dispatch = useDispatch();
-
+  const { onClose, isOpen, setAction, meetingData, fetchData } = props;
   const [leaddata, setLeadData] = useState([]);
   const [contactdata, setContactData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [leadModelOpen, setLeadModel] = useState(false);
-  const user = JSON.parse(localStorage.getItem("user"));
-  const todayTime = new Date().toISOString().split(".")[0];
   const [contactModelOpen, setContactModel] = useState(false);
+  const [leadModelOpen, setLeadModel] = useState(false);
+  const todayTime = new Date().toISOString().split(".")[0];
   const leadData = useSelector((state) => state?.leadData?.data);
-  const { onClose, isOpen, setAction, from, fetchData, view } = props;
+  const user = JSON.parse(localStorage.getItem("user"));
   const contactList = useSelector((state) => state?.contactData?.data);
 
   const initialValues = {
-    agenda: "",
-    attendees:
-      props.leadContact === "contactView" && props.id ? [props.id] : [],
-    attendeesLead:
-      props.leadContact === "leadView" && props.id ? [props.id] : [],
-    location: "",
-    related:
-      props.leadContact === "contactView"
-        ? "Contact"
-        : props.leadContact === "leadView"
-        ? "Lead"
-        : null,
-    dateTime: "",
-    notes: "",
+    agenda: meetingData?.agenda || "",
+    attendees: meetingData?.attendees || [],
+    attendeesLead: meetingData?.attendeesLead || [],
+    location: meetingData?.location || "",
+    related: meetingData?.related || null,
+    dateTime: meetingData?.dateTime
+      ? dayjs(meetingData.dateTime).format("YYYY-MM-DDTHH:mm")
+      : "",
+    notes: meetingData?.notes || "",
     createBy: user?._id,
   };
 
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: MeetingSchema,
+    enableReinitialize: true,
     onSubmit: (values, { resetForm }) => {
-      AddData();
+      EditData();
       resetForm();
     },
   });
@@ -85,22 +80,21 @@ const AddMeeting = (props) => {
     setFieldValue,
   } = formik;
 
-  const AddData = async () => {
+  const EditData = async () => {
     try {
-      console.log("values", values);
       setIsLoading(true);
-      let response = await postApi("api/meeting/add", values);
+      let response = await putApi(`api/meeting/${meetingData._id}`, values);
       if (response.status === 200) {
-        toast.success("Meeting added successfully!");
-        props.onClose();
-        props.setAction((pre) => !pre);
-        if (props.fetchData) {
-          props.fetchData(); // Refresh parent component data
+        toast.success("Meeting updated successfully!");
+        onClose();
+        setAction((pre) => !pre);
+        if (fetchData) {
+          fetchData();
         }
       }
     } catch (e) {
-      console.error("Error adding meeting:", e);
-      toast.error("Failed to add meeting");
+      console.error("Error updating meeting:", e);
+      toast.error("Failed to update meeting");
     } finally {
       setIsLoading(false);
     }
@@ -108,19 +102,17 @@ const AddMeeting = (props) => {
 
   const fetchAllData = useCallback(async () => {
     try {
-      // Fetch contact data
       const contactResult = await dispatch(fetchContactData());
       if (contactResult.payload?.status === 200) {
         setContactData(contactResult.payload.data);
       }
 
-      // Fetch lead data
       const leadResult = await dispatch(fetchLeadData());
       if (leadResult.payload?.status === 200) {
         setLeadData(leadResult.payload.data);
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      //   console.error("Error fetching data:", error);
       toast.error("Failed to fetch data");
     }
   }, [dispatch]);
@@ -139,7 +131,7 @@ const AddMeeting = (props) => {
 
   useEffect(() => {
     fetchAllData();
-  }, [props.id, values.related, fetchAllData]);
+  }, [fetchAllData]);
 
   const extractLabels = (selectedItems) => {
     return selectedItems.map((item) => item._id);
@@ -157,10 +149,9 @@ const AddMeeting = (props) => {
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent height={"580px"}>
-        <ModalHeader>Add Meeting </ModalHeader>
+        <ModalHeader>Edit Meeting</ModalHeader>
         <ModalCloseButton />
         <ModalBody overflowY={"auto"} height={"400px"}>
-          {/* Contact Model  */}
           <MultiContactModel
             data={contactdata}
             isOpen={contactModelOpen}
@@ -168,7 +159,6 @@ const AddMeeting = (props) => {
             fieldName="attendees"
             setFieldValue={setFieldValue}
           />
-          {/* Lead Model  */}
           <MultiLeadModel
             data={leaddata}
             isOpen={leadModelOpen}
@@ -199,7 +189,6 @@ const AddMeeting = (props) => {
                 borderColor={errors.agenda && touched.agenda ? "red.300" : null}
               />
               <Text fontSize="sm" mb="10px" color={"red"}>
-                {" "}
                 {errors.agenda && touched.agenda && errors.agenda}
               </Text>
             </GridItem>
@@ -218,23 +207,11 @@ const AddMeeting = (props) => {
                 value={values.related}
               >
                 <Stack direction="row">
-                  {props.leadContact === "contactView" && (
-                    <Radio value="Contact">Contact</Radio>
-                  )}
-                  {props.leadContact === "leadView" && (
-                    <Radio value="Lead">Lead</Radio>
-                  )}
-                  {!props.leadContact && (
-                    <>
-                      {" "}
-                      <Radio value="Contact">Contact</Radio>
-                      <Radio value="Lead">Lead</Radio>
-                    </>
-                  )}
+                  <Radio value="Contact">Contact</Radio>
+                  <Radio value="Lead">Lead</Radio>
                 </Stack>
               </RadioGroup>
               <Text mb="10px" color={"red"} fontSize="sm">
-                {" "}
                 {errors.related && touched.related && errors.related}
               </Text>
             </GridItem>
@@ -246,7 +223,7 @@ const AddMeeting = (props) => {
                   <Flex alignItems={"end"} justifyContent={"space-between"}>
                     <Text w={"100%"}>
                       <CUIAutoComplete
-                        label={`Choose Preferred Attendes ${
+                        label={`Choose Preferred Attendees ${
                           values.related === "Contact"
                             ? "Contact"
                             : values.related === "Lead" && "Lead"
@@ -285,7 +262,6 @@ const AddMeeting = (props) => {
                     />
                   </Flex>
                   <Text color={"red"}>
-                    {" "}
                     {errors.attendees && touched.attendees && errors.attendees}
                   </Text>
                 </GridItem>
@@ -313,7 +289,6 @@ const AddMeeting = (props) => {
                 }
               />
               <Text mb="10px" color={"red"} fontSize="sm">
-                {" "}
                 {errors.location && touched.location && errors.location}
               </Text>
             </GridItem>
@@ -342,7 +317,6 @@ const AddMeeting = (props) => {
                 }
               />
               <Text fontSize="sm" mb="10px" color={"red"}>
-                {" "}
                 {errors.dateTime && touched.dateTime && errors.dateTime}
               </Text>
             </GridItem>
@@ -368,7 +342,6 @@ const AddMeeting = (props) => {
                 borderColor={errors.notes && touched.notes ? "red.300" : null}
               />
               <Text mb="10px" color={"red"}>
-                {" "}
                 {errors.notes && touched.notes && errors.notes}
               </Text>
             </GridItem>
@@ -382,7 +355,7 @@ const AddMeeting = (props) => {
             disabled={isLoading ? true : false}
             onClick={handleSubmit}
           >
-            {isLoading ? <Spinner /> : "Save"}
+            {isLoading ? <Spinner /> : "Update"}
           </Button>
           <Button
             sx={{
@@ -404,4 +377,4 @@ const AddMeeting = (props) => {
   );
 };
 
-export default AddMeeting;
+export default EditMeeting;
