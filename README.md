@@ -22,3 +22,17 @@ This test is designed to evaluate your coding ability through the experience of 
   - Clean and consistent code style
   - Optimization where applicable
 - You may reference the structure or logic of other existing features within the project.
+
+
+### Solution
+- Server .env
+NODE_ENV=development
+
+DB =db_name
+DB_URL=mongodb://127.0.0.1:27017
+
+JWT_SECRET=jwt_secret
+JWT_EXPIRATION=3d
+
+- Client
+REACT_APP_BASE_URL=http://localhost:5001/
