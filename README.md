@@ -26,13 +26,13 @@ This test is designed to evaluate your coding ability through the experience of 
 
 ### Solution
 - Server .env
-NODE_ENV=development
+``NODE_ENV=development
 
 DB =db_name
 DB_URL=mongodb://127.0.0.1:27017
 
 JWT_SECRET=jwt_secret
-JWT_EXPIRATION=3d
+JWT_EXPIRATION=3d``
 
 - Client
-REACT_APP_BASE_URL=http://localhost:5001/
+``REACT_APP_BASE_URL=http://localhost:5001/``
